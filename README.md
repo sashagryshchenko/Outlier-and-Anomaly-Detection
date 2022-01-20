@@ -3,7 +3,9 @@
 This project goes over ways to identify potential outliers/anomalies in a large dataset on domestic U.S. flights. One of the challenges with the data is its size - there are almost 590,000 observations making the computation taxing and lengthy. With the use of known methods and data exploration, I was able to narrow down the possible outliers and then confirm that these are in fact odd by using validation techniques. 
 
 
-```{r setup, include=FALSE, echo=TRUE, cache=TRUE}
+
+
+```{r load-packages}
 library(tidyverse)
 library(dplyr)
 library(kableExtra)
@@ -81,7 +83,7 @@ flights <- subset(flights,select=-c(YEAR,ORIGIN_AIRPORT_ID,DEST_AIRPORT_SEQ_ID,A
 
 We can visualize how many flights occurred on any given day, of which there were 31 (the month of January in 2019), and see if there are any visible differences in the data. We see that the majority of the number of flights were above 18,000, with 5 observations below that threshold. With the boxplot, we see that there are three outliers (using Tukey's boxplot test). These occur on the 12th, 19th, and 26th of the month.
 
-```{r,fig.align = 'center',out.width="100%",fig.cap = "Number of Floights Exploration",echo=FALSE}
+```{r,fig.align = 'center',out.width="100%",fig.cap = "Number of Flights Exploration",echo=FALSE}
 par(mfrow=c(1,2))
 flights$VALUE <- 1
 flights$FL_DATE <- as.Date(flights$FL_DATE)
@@ -175,6 +177,8 @@ flights$ORIGIN_CITY_NAME[which(flights$ORIGIN_CITY_NAME=="West Palm Beach/Palm B
 ```
 
 We can now study the number of flights on any particular day of the week.
+
+## Data Exploration
 
 ```{r,message=FALSE,warning=FALSE,echo=FALSE}
 par(mfrow=c(1,2))
@@ -302,7 +306,10 @@ cdplot(as.factor(flights$ARR_DEL15)~flights$FL_DATE,
 ```
 We see that only a relatively small fraction of flights was delayed for over 15 minutes (only ~18\% of all flights, which matches with the data on arrival delays). We can take a look at how these delays are spread out throughout the month of January. Also above we see that there are not any obvious extreme discrepancies in the delay patterns - the fraction of flights that arrive over 15 minutes late hovers around the average for every day if the month.
 
-```{r,fig.align = 'center',out.width="100%",fig.cap = "15+ Minute Arrival Selays vs Arrival Delays",message=FALSE,warning=FALSE,echo=FALSE}
+We also want to consider arrival delay of less than -15 minutes, i.e., those flights that arrived over 15 minutes early.
+
+```{r,fig.align = 'center',out.width="100%",fig.cap = "15+ Minute Arrival Delays vs Arrival Delays",message=FALSE,warning=FALSE,echo=FALSE}
+flights$ARR_DEL15[which(flights$ARR_DELAY<=-15)] <- 1
 ggdensity(flights, x = "ARR_DELAY",
    add = "mean", rug = TRUE,
    color = "ARR_DEL15", fill = "ARR_DEL15",
@@ -317,6 +324,10 @@ summary(flights$ARR_DELAY[which(flights$ARR_DEL15==1)])
 ```
 
 We see that by only considering the data where the delays are over 15 minutes, the quantiles have shifted, potentially helping us identify the "true" outliers. This may be the case because the negative values skew the data, where the negative values are simply early arrivals. Arrival delays lasting more than 15 minutes are already outliers on their own - presumably that's why the variable was created. So, we will use this variable to identify which arrival delays spanned for over 15 minutes and see how these compare to the outliers found by other methods.
+
+## Data Analysis: Departure vs Arrival Delays
+
+### HDBSCAN
 
 ```{r,fig.align = 'center',out.width="100%",fig.cap = "Clusters for Full Data (Sample)",message=FALSE,warning=FALSE,echo=FALSE,cache=TRUE}
 flights <- na.omit(flights)
@@ -339,16 +350,16 @@ for (i in 1:n){
   indz[[i]] <- as.numeric(rownames(z[[i]][hdbscanResult[[i]],]))
 }
 
-ind <- unlist(indz)
+indH <- unlist(indz)
 
 colors <- c("Inliers" = "blue", "Outliers" = "red")
 ggplot() +
   labs(x = "Day of Week", y = "Delay in Departure") +
   theme_classic() +
-  geom_point(data=flights[unique(ind[duplicated(ind)]),],
+  geom_point(data=flights[unique(indH[duplicated(indH)]),],
              aes(x=DEP_DELAY,y=ARR_DELAY,color="red"),
              alpha=0.5,shape=20) +
-  geom_point(data=flights[-unique(ind[duplicated(ind)]),],
+  geom_point(data=flights[-unique(indH[duplicated(indH)]),],
              aes(x=DEP_DELAY,y=ARR_DELAY,color="blue"),
              alpha=0.5,shape=20) +
   theme(legend.position = "top", legend.direction = "horizontal") +
@@ -361,9 +372,11 @@ ggplot() +
 
 Rather than plotting all the different clusters the method created, we focus on only outliers vs. non-outliers. It is evident that there are quite a few observations identified as outliers (all the red points), but these are actually a small fraction of the dataset (relative to how it looks in the plot above) - (or 24.7\%) of the observations are outliers. We see that the inliers are centered around the small positive and negative values, with most of the outliers scattered around larger delay times. 
 
+### Mahalanobis Distance
+
 We can use a distance based method to group those observations that are similar (as we did before, but only now we'll focus on creating one group). A good start here would be mahalanobis - we will look for the distances between observations, select a reasonable cut off distance, and see how this compares to the previous results.
 
-```{r}
+```{r,message=FALSE,warning=FALSE,cache=TRUE}
 mdist <- mahalanobis(numvars, as.numeric(colMeans(numvars)), cov(numvars))
 plot(1:length(mdist),mdist,pch=20,xlab="Observation Number",ylab="Mahalanobis Distance Between the Points")
 ```
@@ -412,9 +425,11 @@ ggplot() +
 
 It becomes evident that whatever observations are close to the calculated center (9 minutes for departure and 4 minutes for arrival delays) will be regarded as the inliers. We conclude that it makes more sense to use the 99th percentile as a frame of reference.
 
+### Cosine Similarity Distance
+
 Next, we can use the cosine similarity distance and see how this compares to previous results. We do so by calculating the similarity between the data points and the data center - simply the means for each departure and arrival delays. We again plot the distances and see that the majority are concentrated around zero. We will again choose the 99th percentile (distance of 6.7) as the distance cutoff and treat all values above this as outliers. There are 5,660 of these.
 
-```{r}
+```{r,message=FALSE,warning=FALSE,cache=TRUE}
 p <- as.matrix(numvars)
 q <- as.numeric(colMeans(numvars))
 d <- rowSums(p*q)/(norm(p)*(q[1]^2+q[2]^2))
@@ -445,9 +460,11 @@ Again we see a similar pattern to that found when using the Mahalanobis distance
 length(intersect(which(d>as.numeric(quantile(d,0.99))),which(mdist>as.numeric(quantile(mdist,0.99)))))
 ```
 
+### Isolation Forest Method
+
 Next, we can move onto density based methods, starting out with Isolation Forest Method (IsoForest). This technique tries to isolate anomalous points by randomly selecting an attribute and a split value between that attribute’s min/max values, continuing until every point is alone in its component. Below we see that in using this method there are quite a few points in the scatterplot where their score lies far from ~0, which is the dense region. Similarly, in the density plot we note the long tail, likely containing outlying observations. Results here are shown for one tree, build in a specific way, but we would like to observe the results of using many trees to validate the presence of outliers.
 
-```{r}
+```{r,message=FALSE,warning=FALSE,cache=TRUE}
 iso <- isolation.forest(numvars, ntrees = 100, nthreads=1)
 iso.d <- predict(iso, numvars)
 par(mfrow=c(1,2))
@@ -457,7 +474,7 @@ plot(density(iso.d),ylab="IsoForest Density",main="",xlab="")
 
 We can proceed with creating 2,220 trees with various parameters, identifying the outliers for each, and then comparing these to each other. The result is the outliers that repeatedly show up in each tree.
 
-```{r}
+```{r,message=FALSE,warning=FALSE,cache=TRUE}
 pars <- list("sample_size"=c(seq(256,565760,2560),565963),
              "ntrees"=seq(10,100,10))
 iso.den <- matrix(rep(list(vector(mode="list")),length(pars[[1]])*length(pars[[2]])),
@@ -493,9 +510,11 @@ ggplot() +
   coord_cartesian(xlim = c(0, 1750), ylim = c(0, 1750))
 ```
 
-We can proceed with LOF (local oitlier factor). This methods works by calculating the deviations from an observation to its nearest neighbors. An observation is then considered an outlier/anomaly if this deviation is large.
+### Local Outlier Factor
 
-```{r}
+We can proceed with LOF (local outlier factor). This methods works by calculating the deviations from an observation to its nearest neighbors. An observation is then considered an outlier/anomaly if this deviation is large.
+
+```{r,message=FALSE,warning=FALSE,cache=TRUE}
 methodLOF <- function(number){
   s <- sample(nrow(numvars),number)
   numvars <- numvars[s,]
@@ -549,11 +568,13 @@ ggplot() +
   coord_cartesian(xlim = c(0, 1750), ylim = c(0, 1750))
 ```
 
+## Final Results
+
 We can compare the results of all methods. We won't display each outlier as there are too many here; instead, we will display how many outliers each method identified.
 
-```{r,echo=FALSE,message=FALSE,warning=FALSE,cache=TRUE}
+```{r,message=FALSE,warning=FALSE,cache=TRUE}
 d.15 <- which(flights$ARR_DEL15==1)
-d.hdbscan <- unique(ind[duplicated(ind)])
+d.hdbscan <- unique(indH[duplicated(indH)])
 d.mah <- which(mdist>as.numeric(quantile(mdist,0.99)))
 d.cos <- which(d>as.numeric(quantile(d,0.99)))
 outs <- c(length(d.15),length(d.hdbsca),length(d.mah),
@@ -571,10 +592,10 @@ kable(results,caption="Outliers for Each Method",
   row_spec(0,bold=TRUE)
 ```
 
-Next, we will find what outliers overlap for each method and plot these against the inliers. This set will be our final set of outliers. As we suspected, this consists of the arrival and departures delays that last (on average) over half an hour.
+Next, we will find what outliers overlap for each method and plot these against the inliers. This set will be our final set of outliers.
 
 ```{r,fig.align = 'center',out.width="100%",fig.cap = "Outliers for Flight's Data",message=FALSE,warning=FALSE,echo=FALSE,cache=TRUE}
-out <- intersect(d.15,d.hdbscan,d.mah,d.cos,isoF,lofs)
+out <- Reduce(intersect,list(d.15,d.hdbscan,d.mah,d.cos,isoF,lofs))
 ggplot() +
   labs(x = "Day of Week", y = "Delay in Departure") +
   theme_classic() +
