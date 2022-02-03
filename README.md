@@ -882,36 +882,42 @@ An observation is then considered an outlier/anomaly if this deviation
 is large. There are 3,115 identified by the combination of methods.
 
 ``` r
-methodLOF <- function(number){
-  s <- sample(nrow(numvars),number)
-  numvars <- numvars[s,]
-  k <- dim(numvars)[1]
-  kdist <- matrix(nrow=k,ncol=k)
-  for (i in 1:k){
-    for (j in 1:k){
-      kdist[i,j] <- as.numeric(abs(numvars[i,1]-numvars[j,1])+abs(numvars[i,2]-numvars[j,2]))
+manh.dist <- function(x,y){
+  d <- matrix(nrow=length(x),ncol=length(y))
+  for (i in 1:(length(x))){
+    for (j in 1:length(y)){
+      d[i,j] <- abs(x[i]-x[j])+abs(y[i]-y[j])
     }
   }
-ind <- t(apply(kdist,1,sort))
-  kind <- matrix(nrow=k,ncol=2)
-  for (i in 1:k){
-    kind[i,1] <- sum(ind[i,which(ind[i,]<=10)])
-    kind[i,2] <- length(which(ind[i,]<=10))
+  d
+}
+methodLOF <- function(number){
+  s <- sample(nrow(numvars),number)
+  mat <- numvars[s,]
+  mat <- scale(mat,center=TRUE,scale=TRUE)
+  k <- floor(sqrt(dim(mat)[1]))
+  mdist <- manh.dist(mat[,1],mat[,2])
+  kdist <- t(apply(mdist,1,order))[,seq(2,1+k,1)]
+
+  rd <- matrix(nrow=dim(kdist)[1],ncol=dim(kdist)[2])
+  for (i in 1:(dim(kdist)[1])){
+    for (j in 1:(dim(kdist)[2])){
+     rd[i,j] <- max(mdist[i,kdist[i,j]],mdist[kdist[i,j],kdist[kdist[i,j],k]])
+   }
+  }
+  lrd <- c()
+  for (i in 1:dim(kdist)[1]){
+    lrd[i] <- k/sum(rd[i,])
   }
 
-  lrd <- c()
-  for (i in 1:k){
-    lrd[i] <- (1/kind[i,1])/kind[i,2]
-  }
-  lrd[which(lrd==Inf)] <- max(lrd[-which(lrd==max(lrd))])
-  
   lof <- c()
-  for (i in 1:k){
-    lof[i] <- sum(lrd[which(ind[i,]<=10)])/(kind[i,2]*lrd[i])
+  for (i in 1:dim(kdist)[1]){
+    lof[i] <- sum(lrd[kdist[i,]])/(k*lrd[i])
   }
-  s[which(lof>=quantile(sort(lof,decreasing=TRUE),0.99))]
+  
+  as.numeric(s[which(lof>quantile(lof,0.99))])
 }
-lofs <- replicate(2000,methodLOF(500))
+lofs <- replicate(500,methodLOF(5000))
 lofs <- unlist(lofs)[duplicated(unlist(lofs))]
 ```
 
@@ -944,6 +950,9 @@ Outliers for Each Method
 15+ Minute Delay (Data)
 </th>
 <th style="text-align:center;font-weight: bold;">
+HDBSCAN
+</th>
+<th style="text-align:center;font-weight: bold;">
 Mahalanobis Distance
 </th>
 <th style="text-align:center;font-weight: bold;">
@@ -953,7 +962,7 @@ Cosine Similarity Distance
 Isolation Forest
 </th>
 <th style="text-align:center;font-weight: bold;">
-HDBSCAN
+LOF
 </th>
 </tr>
 </thead>
@@ -966,6 +975,9 @@ Number of Outliers
 269143
 </td>
 <td style="text-align:center;">
+91593
+</td>
+<td style="text-align:center;">
 5660
 </td>
 <td style="text-align:center;">
@@ -975,7 +987,7 @@ Number of Outliers
 17619
 </td>
 <td style="text-align:center;">
-91593
+17367
 </td>
 </tr>
 </tbody>
