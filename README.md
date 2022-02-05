@@ -108,7 +108,7 @@ no
 </tr>
 <tr>
 <td style="text-align:left;font-style: italic;">
-DAY\_OF\_WEEK
+DAY_OF_WEEK
 </td>
 <td style="text-align:left;width: 4cm; ">
 day of week for the flight
@@ -117,7 +117,7 @@ day of week for the flight
 numeric
 </td>
 <td style="text-align:left;width: 4cm; ">
-\[1, 7\]
+[1, 7]
 </td>
 <td style="text-align:center;">
 yes
@@ -125,7 +125,7 @@ yes
 </tr>
 <tr>
 <td style="text-align:left;font-style: italic;">
-FL\_DATE
+FL_DATE
 </td>
 <td style="text-align:left;width: 4cm; ">
 date of flight
@@ -134,7 +134,7 @@ date of flight
 character
 </td>
 <td style="text-align:left;width: 4cm; ">
-\[2019-01-01, 2019-01-31\]
+[2019-01-01, 2019-01-31]
 </td>
 <td style="text-align:center;">
 yes
@@ -142,7 +142,7 @@ yes
 </tr>
 <tr>
 <td style="text-align:left;font-style: italic;">
-ORIGIN\_AIRPORT\_ID
+ORIGIN_AIRPORT_ID
 </td>
 <td style="text-align:left;width: 4cm; ">
 airport ID at the origin
@@ -151,7 +151,7 @@ airport ID at the origin
 numeric
 </td>
 <td style="text-align:left;width: 4cm; ">
-\[10,135, 16,218\]
+[10,135, 16,218]
 </td>
 <td style="text-align:center;">
 no
@@ -159,7 +159,7 @@ no
 </tr>
 <tr>
 <td style="text-align:left;font-style: italic;">
-ORIGIN\_AIRPORT\_SEQ\_ID
+ORIGIN_AIRPORT_SEQ_ID
 </td>
 <td style="text-align:left;width: 4cm; ">
 airport ID at the origin (at the sequential level)
@@ -168,7 +168,7 @@ airport ID at the origin (at the sequential level)
 numeric
 </td>
 <td style="text-align:left;width: 4cm; ">
-\[1,013,505, 1,621,802\]
+[1,013,505, 1,621,802]
 </td>
 <td style="text-align:center;">
 no
@@ -176,7 +176,7 @@ no
 </tr>
 <tr>
 <td style="text-align:left;font-style: italic;">
-ORIGIN\_CITY\_MARKET\_ID
+ORIGIN_CITY_MARKET_ID
 </td>
 <td style="text-align:left;width: 4cm; ">
 identification number assigned to identify a city market at the origin
@@ -185,7 +185,7 @@ identification number assigned to identify a city market at the origin
 numeric
 </td>
 <td style="text-align:left;width: 4cm; ">
-\[30,070, 35,991\]
+[30,070, 35,991]
 </td>
 <td style="text-align:center;">
 no
@@ -193,7 +193,7 @@ no
 </tr>
 <tr>
 <td style="text-align:left;font-style: italic;">
-ORIGIN\_CITY\_NAME
+ORIGIN_CITY_NAME
 </td>
 <td style="text-align:left;width: 4cm; ">
 US city and state name at the origin
@@ -202,7 +202,7 @@ US city and state name at the origin
 character
 </td>
 <td style="text-align:left;width: 4cm; ">
-\*340 unique cities
+*340 unique cities
 </td>
 <td style="text-align:center;">
 yes
@@ -210,7 +210,7 @@ yes
 </tr>
 <tr>
 <td style="text-align:left;font-style: italic;">
-DEST\_AIRPORT\_ID
+DEST_AIRPORT_ID
 </td>
 <td style="text-align:left;width: 4cm; ">
 airport ID at the destination
@@ -219,7 +219,7 @@ airport ID at the destination
 numeric
 </td>
 <td style="text-align:left;width: 4cm; ">
-\[10,135, 16,218\]
+[10,135, 16,218]
 </td>
 <td style="text-align:center;">
 no
@@ -227,7 +227,7 @@ no
 </tr>
 <tr>
 <td style="text-align:left;font-style: italic;">
-DEST\_AIRPORT\_SEQ\_ID
+DEST_AIRPORT_SEQ_ID
 </td>
 <td style="text-align:left;width: 4cm; ">
 airport ID at the destination (at the sequential level)
@@ -236,7 +236,7 @@ airport ID at the destination (at the sequential level)
 numeric
 </td>
 <td style="text-align:left;width: 4cm; ">
-\[1,013,505, 1,621,802\]
+[1,013,505, 1,621,802]
 </td>
 <td style="text-align:center;">
 no
@@ -244,7 +244,7 @@ no
 </tr>
 <tr>
 <td style="text-align:left;font-style: italic;">
-DEST\_CITY\_MARKET\_ID
+DEST_CITY_MARKET_ID
 </td>
 <td style="text-align:left;width: 4cm; ">
 identification number assigned to identify a city market at the
@@ -254,7 +254,7 @@ destination
 numeric
 </td>
 <td style="text-align:left;width: 4cm; ">
-\[30,070, 35,991\]
+[30,070, 35,991]
 </td>
 <td style="text-align:center;">
 no
@@ -262,7 +262,7 @@ no
 </tr>
 <tr>
 <td style="text-align:left;font-style: italic;">
-DEST\_CITY\_NAME
+DEST_CITY_NAME
 </td>
 <td style="text-align:left;width: 4cm; ">
 US city and state name at the destination
@@ -271,7 +271,7 @@ US city and state name at the destination
 character
 </td>
 <td style="text-align:left;width: 4cm; ">
-\*340 unique cities
+*340 unique cities
 </td>
 <td style="text-align:center;">
 yes
@@ -279,7 +279,7 @@ yes
 </tr>
 <tr>
 <td style="text-align:left;font-style: italic;">
-DEST\_STATE\_ABR
+DEST_STATE_ABR
 </td>
 <td style="text-align:left;width: 4cm; ">
 abbreviated name of state at the destination
@@ -288,7 +288,7 @@ abbreviated name of state at the destination
 character
 </td>
 <td style="text-align:left;width: 4cm; ">
-\*52 unique names
+*52 unique names
 </td>
 <td style="text-align:center;">
 yes
@@ -296,7 +296,7 @@ yes
 </tr>
 <tr>
 <td style="text-align:left;font-style: italic;">
-DEP\_DELAY
+DEP_DELAY
 </td>
 <td style="text-align:left;width: 4cm; ">
 delay of departure in minutes
@@ -305,7 +305,7 @@ delay of departure in minutes
 numeric
 </td>
 <td style="text-align:left;width: 4cm; ">
-\[-47, 1,651\]
+[-47, 1,651]
 </td>
 <td style="text-align:center;">
 yes
@@ -313,7 +313,7 @@ yes
 </tr>
 <tr>
 <td style="text-align:left;font-style: italic;">
-ARR\_TIME
+ARR_TIME
 </td>
 <td style="text-align:left;width: 4cm; ">
 time of arrival
@@ -322,7 +322,7 @@ time of arrival
 numeric
 </td>
 <td style="text-align:left;width: 4cm; ">
-\[1, 2,400\]
+[1, 2,400]
 </td>
 <td style="text-align:center;">
 no
@@ -330,7 +330,7 @@ no
 </tr>
 <tr>
 <td style="text-align:left;font-style: italic;">
-ARR\_DELAY
+ARR_DELAY
 </td>
 <td style="text-align:left;width: 4cm; ">
 delay of arrival in minutes
@@ -339,7 +339,7 @@ delay of arrival in minutes
 numeric
 </td>
 <td style="text-align:left;width: 4cm; ">
-\[-85, 1,638\]
+[-85, 1,638]
 </td>
 <td style="text-align:center;">
 yes
@@ -347,7 +347,7 @@ yes
 </tr>
 <tr>
 <td style="text-align:left;font-style: italic;">
-ARR\_DELAY\_NEW
+ARR_DELAY_NEW
 </td>
 <td style="text-align:left;width: 4cm; ">
 adjusted delay of arrival in minutes
@@ -356,7 +356,7 @@ adjusted delay of arrival in minutes
 numeric
 </td>
 <td style="text-align:left;width: 4cm; ">
-\[0, 1,638\]
+[0, 1,638]
 </td>
 <td style="text-align:center;">
 yes
@@ -364,7 +364,7 @@ yes
 </tr>
 <tr>
 <td style="text-align:left;font-style: italic;">
-ARR\_DEL15
+ARR_DEL15
 </td>
 <td style="text-align:left;width: 4cm; ">
 unknown
