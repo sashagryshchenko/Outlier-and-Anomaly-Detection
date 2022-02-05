@@ -1,7 +1,6 @@
 ---
 title: "Outlier and Anomaly Detection"
 author: "Sasha Gryshchenko"
-date: "January 4, 2022"
 output: github_document
 always_allow_html: yes
 urlcolor: blue
@@ -344,7 +343,7 @@ hullplot(z, hdbscanResult, xlab="Departure Delays", ylab="Arrival Delays",pch=20
 
 Above is the plot for the results of HDBSCAN for the entire dataset. The black points are the outliers (as identified by the method). Note that here we only used a sample from the data due to the dataset dimensions - there are far too many observations for the package to run, so we will need to come up with a method to sample over the data and observe what's identified as an "outlier".
 
-```{r,fig.align = 'center',out.width="75%",fig.cap = "HDBSCAN: Clusters for Full Data",message=FALSE,warning=FALSE,cache=TRUE}
+```{r,message=FALSE,warning=FALSE,cache=TRUE}
 n <- 100
 z <- indz <- vector(mode="list", length=n)
 hdbscanResult <- vector(mode="list", length=n)
@@ -355,10 +354,12 @@ for (i in 1:n){
 }
 
 indH <- unlist(indz)
+```
 
+```{r,fig.align = 'center',out.width="75%",fig.cap = "HDBSCAN: Clusters for Full Data",message=FALSE,warning=FALSE}
 colors <- c("Inliers" = "blue", "Outliers" = "red")
 ggplot() +
-  labs(x = "Day of Week", y = "Delay in Departure") +
+  labs(x = "Departure Delays", y = "Arrival Delays") +
   theme_classic() +
   geom_point(data=flights[unique(indH[duplicated(indH)]),],
              aes(x=DEP_DELAY,y=ARR_DELAY,color="red"),
@@ -374,7 +375,7 @@ ggplot() +
   coord_cartesian(xlim = c(0, 1750), ylim = c(0, 1750))
 ```
 
-Rather than plotting all the different clusters the method created, we focus on only outliers vs. non-outliers. It is evident that there are quite a few observations identified as outliers (all the red points), but these are actually a small fraction of the dataset (relative to how it looks in the plot above) - (or 24.7\%) of the observations are outliers. We see that the inliers are centered around the small positive and negative values, with most of the outliers scattered around larger delay times. 
+Rather than plotting all the different clusters the method created, we focus on only outliers vs. non-outliers. It is evident that there are quite a few observations identified as outliers (all the red points), but these are actually a small fraction of the dataset (relative to how it looks in the plot above) - (or 24.7\%) of the observations are outliers. We see that the inliers are centered around the small positive and negative values, with most of the outliers scattered around larger delay times. The method does not seem to pick up on all the observations we would imagine are likely to be outliers (very large arrival/departure delays), so we will focus on other methods instead.
 
 ### Mahalanobis Distance
 
@@ -385,17 +386,17 @@ mdist <- mahalanobis(numvars, as.numeric(colMeans(numvars)), cov(numvars))
 plot(1:length(mdist),mdist,pch=20,xlab="Observation Number",ylab="Mahalanobis Distance Between the Points")
 ```
 
-It seems that the majority of the distances between points and the calculated data center are quite small - mostly below ~200. We can begin by selecting a cut-off distance equivalent to the 99th percentile. In this case, this is 22.7 and there are 5,660 observations that are greater than the aforementioned value. We can plot these observations as outliers (in red) vs the rest of the data or inliers (in blue).
+It seems that the majority of the distances between points and the calculated data center are quite small - mostly below ~200. We can begin by selecting a cut-off distance equivalent to the 95th percentile. In this case, this is 6.13 and there are 28,6290 observations that are greater than the aforementioned value. We can plot these observations as outliers (in red) vs the rest of the data or inliers (in blue).
 
-```{r,fig.align = 'center',out.width="75%",fig.cap = "Mahalanobis Distance: 99th Percentile",message=FALSE,warning=FALSE,echo=FALSE,cache=TRUE}
+```{r,fig.align = 'center',out.width="75%",fig.cap = "Mahalanobis Distance: 95th Percentile",message=FALSE,warning=FALSE,echo=FALSE}
 ggplot() +
-  labs(x = "Day of Week", y = "Delay in Departure") +
+  labs(x = "Departure Delays", y = "Arrival Delays") +
   theme_classic() +
-  geom_point(data=numvars[-which(mdist>as.numeric(quantile(mdist,0.99))),],
-             aes(x=DEP_DELAY,y=ARR_DELAY,color="blue"),
-             alpha=0.5,shape=20) +
-  geom_point(data=numvars[which(mdist>as.numeric(quantile(mdist,0.99))),],
+  geom_point(data=numvars[which(mdist>as.numeric(quantile(mdist,0.95))),],
              aes(x=DEP_DELAY,y=ARR_DELAY,color="red"),
+             alpha=0.5,shape=20) +
+    geom_point(data=numvars[-which(mdist>as.numeric(quantile(mdist,0.95))),],
+             aes(x=DEP_DELAY,y=ARR_DELAY,color="blue"),
              alpha=0.5,shape=20) +
   theme(legend.position = "top", legend.direction = "horizontal") +
   scale_color_identity(name = "Observation Type",
@@ -407,17 +408,17 @@ ggplot() +
 
 This is quite similar to what we found previously (and what we expected to see) - those observations that have shorter delay times are considered inliers, while those exceeding a pre-specified threshold are outliers (or, potentialy, anomalies). It is also clear that those obsrvations where the delays in departures vs arrivals are not consistent (e.g., 3 vs 73 minutes) are thought of as outliers. 
 
-Next, we can try to increase this threshold and see how the pattern changes for the inliers. We now present a plot for the delay data where 99.9% of the data are inliers (based on the calculated distances) and so 566 observations are potential outliers.
+Next, we can try to increase this threshold and see how the pattern changes for the inliers. We now present a plot for the delay data where 97.5% of the data are inliers (based on the calculated distances) and so 14,149 observations are potential outliers.
 
-```{r,fig.align = 'center',out.width="75%",fig.cap = "Mahalanobis Distance: 99.9th Percentile",message=FALSE,warning=FALSE,echo=FALSE,cache=TRUE}
+```{r,fig.align = 'center',out.width="75%",fig.cap = "Mahalanobis Distance: 99.9th Percentile",message=FALSE,warning=FALSE,echo=FALSE}
 ggplot() +
-  labs(x = "Day of Week", y = "Delay in Departure") +
+  labs(x = "Departure Delays", y = "Arrival Delays") +
   theme_classic() +
-  geom_point(data=numvars[-which(mdist>as.numeric(quantile(mdist,0.999))),],
-             aes(x=DEP_DELAY,y=ARR_DELAY,color="blue"),
-             alpha=0.5,shape=20) +
-  geom_point(data=numvars[which(mdist>as.numeric(quantile(mdist,0.999))),],
+  geom_point(data=numvars[which(mdist>as.numeric(quantile(mdist,0.975))),],
              aes(x=DEP_DELAY,y=ARR_DELAY,color="red"),
+             alpha=0.5,shape=20) +
+  geom_point(data=numvars[-which(mdist>as.numeric(quantile(mdist,0.975))),],
+             aes(x=DEP_DELAY,y=ARR_DELAY,color="blue"),
              alpha=0.5,shape=20) +
   theme(legend.position = "top", legend.direction = "horizontal") +
   scale_color_identity(name = "Observation Type",
@@ -427,11 +428,11 @@ ggplot() +
   coord_cartesian(xlim = c(0, 1750), ylim = c(0, 1750))
 ```
 
-It becomes evident that whatever observations are close to the calculated center (9 minutes for departure and 4 minutes for arrival delays) will be regarded as the inliers. We conclude that it makes more sense to use the 99th percentile as a frame of reference.
+It becomes evident that whatever observations are close to the calculated center (9 minutes for departure and 4 minutes for arrival delays) will be regarded as the inliers. We conclude that it makes more sense to use the 95th percentile as a frame of reference (although the two percentiles give similar results).
 
 ### Cosine Similarity Distance
 
-Next, we can use the cosine similarity distance and see how this compares to previous results. We do so by calculating the similarity between the data points and the data center - simply the means for each departure and arrival delays. We again plot the distances and see that the majority are concentrated around zero. We will again choose the 99th percentile (distance of 6.7) as the distance cutoff and treat all values above this as outliers. There are 5,660 of these.
+Next, we can use the cosine similarity distance and see how this compares to previous results. We do so by calculating the similarity between the data points and the data center - simply the means for each departure and arrival delays. We again plot the distances and see that the majority are concentrated around zero. We will again choose the 95th percentile as the distance cutoff and treat all values above this as outliers. There are 28,297 of these.
 
 ```{r,fig.align = 'center',out.width="75%",fig.cap = "Cosine Similarity Distance",echo=FALSE}
 p <- as.matrix(numvars)
@@ -440,15 +441,15 @@ d <- rowSums(p*q)/(norm(p)*(q[1]^2+q[2]^2))
 plot(1:length(d),d,pch=20,xlab="Observation Number",ylab="Cosine Similarity Distance Between the Points")
 ```
 
-```{r,fig.align = 'center',out.width="75%",fig.cap = "Cosine Similarity Distance: 99th Percentile",message=FALSE,warning=FALSE,echo=FALSE,cache=TRUE}
+```{r,fig.align = 'center',out.width="75%",fig.cap = "Cosine Similarity Distance: 95th Percentile",message=FALSE,warning=FALSE,echo=FALSE}
 ggplot() +
-  labs(x = "Day of Week", y = "Delay in Departure") +
+  labs(x = "Departure Delays", y = "Arrival Delays") +
   theme_classic() +
-  geom_point(data=numvars[-which(d>as.numeric(quantile(d,0.99))),],
-             aes(x=DEP_DELAY,y=ARR_DELAY,color="blue"),
-             alpha=0.5,shape=20) +
-  geom_point(data=numvars[which(d>as.numeric(quantile(d,0.99))),],
+  geom_point(data=numvars[which(d>as.numeric(quantile(d,0.95))),],
              aes(x=DEP_DELAY,y=ARR_DELAY,color="red"),
+             alpha=0.5,shape=20) +
+  geom_point(data=numvars[-which(d>as.numeric(quantile(d,0.95))),],
+             aes(x=DEP_DELAY,y=ARR_DELAY,color="blue"),
              alpha=0.5,shape=20) +
   theme(legend.position = "top", legend.direction = "horizontal") +
   scale_color_identity(name = "Observation Type",
@@ -458,10 +459,10 @@ ggplot() +
   coord_cartesian(xlim = c(0, 1750), ylim = c(0, 1750))
 ```
 
-Again we see a similar pattern to that found when using the Mahalanobis distance. Note that out of 5,660 identified outliers by both methods, 4,114 (or 72.7\%) overlap - this gives us some confidence in there observations being true outliers. We will compare the results for all methods later and make conclusions about anamolous data points.
+Again we see a similar pattern to that found when using the Mahalanobis distance. Note that out of roughly 28,290 identified outliers by both methods, 15,986 (or 56.4\%) overlap - this gives us some confidence in there observations being true outliers. We will compare the results for all methods later and make conclusions about anamolous data points.
 
 ```{r}
-length(intersect(which(d>as.numeric(quantile(d,0.99))),which(mdist>as.numeric(quantile(mdist,0.99)))))
+length(intersect(which(d>as.numeric(quantile(d,0.95))),which(mdist>as.numeric(quantile(mdist,0.95)))))
 ```
 
 ### Isolation Forest Method
@@ -496,9 +497,9 @@ isoF <- unique(unlist(iso.den)[duplicated(unlist(iso.den))])
 
 Below is the plot with the outlying and inlying observations. Once again, this is consistent with what we saw for the distance-based methods.
 
-```{r,fig.align = 'center',out.width="75%",fig.cap = "IsoForest: 99th Percentile",message=FALSE,warning=FALSE,echo=FALSE,cache=TRUE}
+```{r,fig.align = 'center',out.width="75%",fig.cap = "IsoForest: 99th Percentile",message=FALSE,warning=FALSE,echo=FALSE}
 ggplot() +
-  labs(x = "Day of Week", y = "Delay in Departure") +
+  labs(x = "Departure Delays", y = "Arrival Delays") +
   theme_classic() +
   geom_point(data=numvars[isoF,],
              aes(x=DEP_DELAY,y=ARR_DELAY,color="red"),
@@ -562,13 +563,13 @@ Below is the plot of inliers vs outliers.
 
 ```{r,fig.align = 'center',out.width="75%",fig.cap = "LOF: 99th Percentile",message=FALSE,warning=FALSE,echo=FALSE}
 ggplot() +
-  labs(x = "Day of Week", y = "Delay in Departure") +
+  labs(x = "Departure delays", y = "Arrival Delays") +
   theme_classic() +
-  geom_point(data=numvars[-as.numeric(lofs),],
-             aes(x=DEP_DELAY,y=ARR_DELAY,color="blue"),
-             alpha=0.5,shape=20) +
   geom_point(data=numvars[as.numeric(lofs),],
              aes(x=DEP_DELAY,y=ARR_DELAY,color="red"),
+             alpha=0.5,shape=20) +
+  geom_point(data=numvars[-as.numeric(lofs),],
+             aes(x=DEP_DELAY,y=ARR_DELAY,color="blue"),
              alpha=0.5,shape=20) +
   theme(legend.position = "top", legend.direction = "horizontal") +
   scale_color_identity(name = "Observation Type",
@@ -583,12 +584,13 @@ ggplot() +
 We can compare the results of all methods. We won't display each outlier as there are too many here; instead, we will display how many outliers each method identified.
 
 ```{r,message=FALSE,warning=FALSE,cache=TRUE,echo=FALSE}
-d.15 <- which(flights$ARR_DEL15==1)
-d.hdbscan <- unique(indH[duplicated(indH)])
-d.mah <- which(mdist>as.numeric(quantile(mdist,0.99)))
-d.cos <- which(d>as.numeric(quantile(d,0.99)))
+d.15 <- as.numeric(which(flights$ARR_DEL15==1))
+d.hdbscan <- as.numeric(unique(indH[duplicated(indH)]))
+d.mah <- as.numeric(which(mdist>as.numeric(quantile(mdist,0.95))))
+d.cos <- as.numeric(which(d>as.numeric(quantile(d,0.95))))
+isoF <- as.numeric(isoF)
+lofs <- as.numeric(lofs)
 outs <- c(length(d.15),length(d.hdbscan),length(d.mah),length(d.cos),length(isoF),length(lofs))
-# outs <- c(length(d.15),length(d.mah),length(d.cos),length(isoF),length(d.hdbscan))
 
 results <- matrix(c("Number of Outliers",outs),
                   nrow=1,byrow=TRUE)
@@ -602,18 +604,22 @@ kable(results,caption="Outliers for Each Method",
   row_spec(0,bold=TRUE)
 ```
 
-Next, we will find what outliers overlap for each method and plot these against the inliers. This set will be our final set of outliers.
+Next, we will find what outliers overlap for each method and plot these against the inliers. This set will be our final set of outliers. We see that 91,664 (or 16.2\%) of the observations are considered outliers. These were found by combining the results of all the methods and considering outliers that appeared in at least one of the methods. Note that the observations then considered to be inliers had arrival times between -49 and 86 minutes ad departure times between -21 and 88 minutes, which is far more reasonable than what was seen for the original data.
 
-```{r,fig.align = 'center',out.width="75%",fig.cap = "Outliers for Flight's Data",message=FALSE,warning=FALSE,echo=FALSE,cache=TRUE}
-out <- Reduce(intersect,list(d.15,d.mah,d.cos,isoF,d.hdbscan,lofs))
+```{r,fig.align = 'center',out.width="75%",fig.cap = "Outliers for Flight's Data",message=FALSE,warning=FALSE,echo=FALSE}
+out <- unique(c(d.15,d.mah,d.cos,isoF,d.hdbscan,lofs)[duplicated(c(d.15,d.mah,d.cos,isoF,d.hdbscan,lofs))])
+length(out)
+df <- data.frame(range(numvars$ARR_DELAY[-as.numeric(out)]),range(numvars$DEP_DELAY[-as.numeric(out)]),row.names=c("min","max"))
+colnames(df) <- c("Arrival Delays","Departure Delays")
+df
 ggplot() +
-  labs(x = "Day of Week", y = "Delay in Departure") +
+  labs(x = "Departure delays", y = "Arrival Delays") +
   theme_classic() +
-  geom_point(data=numvars[-as.numeric(out),],
-             aes(x=DEP_DELAY,y=ARR_DELAY,color="blue"),
-             alpha=0.5,shape=20) +
   geom_point(data=numvars[as.numeric(out),],
              aes(x=DEP_DELAY,y=ARR_DELAY,color="red"),
+             alpha=0.5,shape=20) +
+  geom_point(data=numvars[-as.numeric(out),],
+             aes(x=DEP_DELAY,y=ARR_DELAY,color="blue"),
              alpha=0.5,shape=20) +
   theme(legend.position = "top", legend.direction = "horizontal") +
   scale_color_identity(name = "Observation Type",

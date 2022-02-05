@@ -1,7 +1,6 @@
 Outlier and Anomaly Detection
 ================
 Sasha Gryshchenko
-January 4, 2022
 
 ## Data Exploration
 
@@ -682,10 +681,12 @@ for (i in 1:n){
 }
 
 indH <- unlist(indz)
+```
 
+``` r
 colors <- c("Inliers" = "blue", "Outliers" = "red")
 ggplot() +
-  labs(x = "Day of Week", y = "Delay in Departure") +
+  labs(x = "Departure Delays", y = "Arrival Delays") +
   theme_classic() +
   geom_point(data=flights[unique(indH[duplicated(indH)]),],
              aes(x=DEP_DELAY,y=ARR_DELAY,color="red"),
@@ -703,7 +704,7 @@ ggplot() +
 
 <div class="figure" style="text-align: center">
 
-<img src="RgithubSG_files/figure-gfm/unnamed-chunk-19-1.png" alt="HDBSCAN: Clusters for Full Data" width="75%" />
+<img src="RgithubSG_files/figure-gfm/unnamed-chunk-20-1.png" alt="HDBSCAN: Clusters for Full Data" width="75%" />
 <p class="caption">
 HDBSCAN: Clusters for Full Data
 </p>
@@ -717,7 +718,9 @@ but these are actually a small fraction of the dataset (relative to how
 it looks in the plot above) - (or 24.7%) of the observations are
 outliers. We see that the inliers are centered around the small positive
 and negative values, with most of the outliers scattered around larger
-delay times.
+delay times. The method does not seem to pick up on all the observations
+we would imagine are likely to be outliers (very large arrival/departure
+delays), so we will focus on other methods instead.
 
 ### Mahalanobis Distance
 
@@ -729,7 +732,7 @@ and see how this compares to the previous results.
 
 <div class="figure" style="text-align: center">
 
-<img src="RgithubSG_files/figure-gfm/unnamed-chunk-20-1.png" alt="Mahalanobis Distance" width="75%" />
+<img src="RgithubSG_files/figure-gfm/unnamed-chunk-21-1.png" alt="Mahalanobis Distance" width="75%" />
 <p class="caption">
 Mahalanobis Distance
 </p>
@@ -738,16 +741,16 @@ Mahalanobis Distance
 
 It seems that the majority of the distances between points and the
 calculated data center are quite small - mostly below \~200. We can
-begin by selecting a cut-off distance equivalent to the 99th percentile.
-In this case, this is 22.7 and there are 5,660 observations that are
+begin by selecting a cut-off distance equivalent to the 95th percentile.
+In this case, this is 6.13 and there are 28,6290 observations that are
 greater than the aforementioned value. We can plot these observations as
 outliers (in red) vs the rest of the data or inliers (in blue).
 
 <div class="figure" style="text-align: center">
 
-<img src="RgithubSG_files/figure-gfm/unnamed-chunk-21-1.png" alt="Mahalanobis Distance: 99th Percentile" width="75%" />
+<img src="RgithubSG_files/figure-gfm/unnamed-chunk-22-1.png" alt="Mahalanobis Distance: 95th Percentile" width="75%" />
 <p class="caption">
-Mahalanobis Distance: 99th Percentile
+Mahalanobis Distance: 95th Percentile
 </p>
 
 </div>
@@ -761,12 +764,12 @@ consistent (e.g., 3 vs 73 minutes) are thought of as outliers.
 
 Next, we can try to increase this threshold and see how the pattern
 changes for the inliers. We now present a plot for the delay data where
-99.9% of the data are inliers (based on the calculated distances) and so
-566 observations are potential outliers.
+97.5% of the data are inliers (based on the calculated distances) and so
+14,149 observations are potential outliers.
 
 <div class="figure" style="text-align: center">
 
-<img src="RgithubSG_files/figure-gfm/unnamed-chunk-22-1.png" alt="Mahalanobis Distance: 99.9th Percentile" width="75%" />
+<img src="RgithubSG_files/figure-gfm/unnamed-chunk-23-1.png" alt="Mahalanobis Distance: 99.9th Percentile" width="75%" />
 <p class="caption">
 Mahalanobis Distance: 99.9th Percentile
 </p>
@@ -776,7 +779,8 @@ Mahalanobis Distance: 99.9th Percentile
 It becomes evident that whatever observations are close to the
 calculated center (9 minutes for departure and 4 minutes for arrival
 delays) will be regarded as the inliers. We conclude that it makes more
-sense to use the 99th percentile as a frame of reference.
+sense to use the 95th percentile as a frame of reference (although the
+two percentiles give similar results).
 
 ### Cosine Similarity Distance
 
@@ -784,13 +788,13 @@ Next, we can use the cosine similarity distance and see how this
 compares to previous results. We do so by calculating the similarity
 between the data points and the data center - simply the means for each
 departure and arrival delays. We again plot the distances and see that
-the majority are concentrated around zero. We will again choose the 99th
-percentile (distance of 6.7) as the distance cutoff and treat all values
-above this as outliers. There are 5,660 of these.
+the majority are concentrated around zero. We will again choose the 95th
+percentile as the distance cutoff and treat all values above this as
+outliers. There are 28,297 of these.
 
 <div class="figure" style="text-align: center">
 
-<img src="RgithubSG_files/figure-gfm/unnamed-chunk-23-1.png" alt="Cosine Similarity Distance" width="75%" />
+<img src="RgithubSG_files/figure-gfm/unnamed-chunk-24-1.png" alt="Cosine Similarity Distance" width="75%" />
 <p class="caption">
 Cosine Similarity Distance
 </p>
@@ -799,24 +803,24 @@ Cosine Similarity Distance
 
 <div class="figure" style="text-align: center">
 
-<img src="RgithubSG_files/figure-gfm/unnamed-chunk-24-1.png" alt="Cosine Similarity Distance: 99th Percentile" width="75%" />
+<img src="RgithubSG_files/figure-gfm/unnamed-chunk-25-1.png" alt="Cosine Similarity Distance: 95th Percentile" width="75%" />
 <p class="caption">
-Cosine Similarity Distance: 99th Percentile
+Cosine Similarity Distance: 95th Percentile
 </p>
 
 </div>
 
 Again we see a similar pattern to that found when using the Mahalanobis
-distance. Note that out of 5,660 identified outliers by both methods,
-4,114 (or 72.7%) overlap - this gives us some confidence in there
-observations being true outliers. We will compare the results for all
-methods later and make conclusions about anamolous data points.
+distance. Note that out of roughly 28,290 identified outliers by both
+methods, 15,986 (or 56.4%) overlap - this gives us some confidence in
+there observations being true outliers. We will compare the results for
+all methods later and make conclusions about anamolous data points.
 
 ``` r
-length(intersect(which(d>as.numeric(quantile(d,0.99))),which(mdist>as.numeric(quantile(mdist,0.99)))))
+length(intersect(which(d>as.numeric(quantile(d,0.95))),which(mdist>as.numeric(quantile(mdist,0.95)))))
 ```
 
-    ## [1] 4114
+    ## [1] 15986
 
 ### Isolation Forest Method
 
@@ -834,7 +838,7 @@ outliers.
 
 <div class="figure" style="text-align: center">
 
-<img src="RgithubSG_files/figure-gfm/unnamed-chunk-26-1.png" alt="Isolation Forest Distance" width="75%" />
+<img src="RgithubSG_files/figure-gfm/unnamed-chunk-27-1.png" alt="Isolation Forest Distance" width="75%" />
 <p class="caption">
 Isolation Forest Distance
 </p>
@@ -867,7 +871,7 @@ methods.
 
 <div class="figure" style="text-align: center">
 
-<img src="RgithubSG_files/figure-gfm/unnamed-chunk-28-1.png" alt="IsoForest: 99th Percentile" width="75%" />
+<img src="RgithubSG_files/figure-gfm/unnamed-chunk-29-1.png" alt="IsoForest: 99th Percentile" width="75%" />
 <p class="caption">
 IsoForest: 99th Percentile
 </p>
@@ -925,7 +929,7 @@ Below is the plot of inliers vs outliers.
 
 <div class="figure" style="text-align: center">
 
-<img src="RgithubSG_files/figure-gfm/unnamed-chunk-30-1.png" alt="LOF: 99th Percentile" width="75%" />
+<img src="RgithubSG_files/figure-gfm/unnamed-chunk-31-1.png" alt="LOF: 99th Percentile" width="75%" />
 <p class="caption">
 LOF: 99th Percentile
 </p>
@@ -978,10 +982,10 @@ Number of Outliers
 91593
 </td>
 <td style="text-align:center;">
-5660
+28290
 </td>
 <td style="text-align:center;">
-5660
+28297
 </td>
 <td style="text-align:center;">
 17619
@@ -994,11 +998,24 @@ Number of Outliers
 </table>
 
 Next, we will find what outliers overlap for each method and plot these
-against the inliers. This set will be our final set of outliers.
+against the inliers. This set will be our final set of outliers. We see
+that 91,664 (or 16.2%) of the observations are considered outliers.
+These were found by combining the results of all the methods and
+considering outliers that appeared in at least one of the methods. Note
+that the observations then considered to be inliers had arrival times
+between -49 and 86 minutes ad departure times between -21 and 88
+minutes, which is far more reasonable than what was seen for the
+original data.
+
+    ## [1] 91664
+
+    ##     Arrival Delays Departure Delays
+    ## min            -49              -21
+    ## max             86               88
 
 <div class="figure" style="text-align: center">
 
-<img src="RgithubSG_files/figure-gfm/unnamed-chunk-32-1.png" alt="Outliers for Flight's Data" width="75%" />
+<img src="RgithubSG_files/figure-gfm/unnamed-chunk-33-1.png" alt="Outliers for Flight's Data" width="75%" />
 <p class="caption">
 Outliers for Flight’s Data
 </p>
