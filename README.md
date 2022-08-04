@@ -1,3 +1,5 @@
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/sashagryshchenko/Outlier-and-Anomaly-Detection.git/HEAD)
+
 Outlier and Anomaly Detection
 ================
 Sasha Gryshchenko
